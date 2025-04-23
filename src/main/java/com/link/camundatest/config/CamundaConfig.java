@@ -1,10 +1,10 @@
 package com.link.camundatest.config;
 
 import lombok.Data;
+import org.camunda.bpm.client.ExternalTaskClient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.List;
 
 @Configuration
 @ConfigurationProperties("link.camunda")
@@ -27,5 +27,19 @@ public class CamundaConfig {
      * 租户id
      */
     private String tenantId;
+
+    private String camundaRestUrl;
+
+    private String username;
+
+    private String password;
+
+    @Bean
+    public ExternalTaskClient processEngineClient() {
+        return ExternalTaskClient.create()
+                .baseUrl(camundaRestUrl)
+                .asyncResponseTimeout(10000)
+                .build();
+    }
 
 }

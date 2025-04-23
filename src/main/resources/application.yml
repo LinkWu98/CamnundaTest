@@ -10,12 +10,21 @@ link:
       checkCard: check-card
       chargeCard: charge-Card
     tenantId: CamundaTest
+    camundaRestUrl: http://localhost:8080/engine-rest
+    username: demo
+    password: demo
 server:
   port: 9050
+
+
+
 camunda.bpm:
   admin-user:
     id: demo
     password: demo
-    firstName: Demo
-  filter:
-    create: All tasks
+  database:
+    type: h2
+    schema-update: true
+  deployment-resource-pattern:
+    - classpath*:camunda/*.bpmn
+  auto-deployment-enabled: true

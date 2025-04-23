@@ -1,14 +1,16 @@
 package com.link.camundatest.service;
 
 import com.link.camundatest.adapter.CamundaTopicDealAdapter;
+import com.link.camundatest.adapter.DefaultTopicDealAdapter;
 import com.link.camundatest.config.CamundaConfig;
+import com.link.camundatest.model.StartProcessReqDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.camunda.bpm.client.ExternalTaskClient;
 import org.camunda.bpm.engine.ExternalTaskService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.externaltask.ExternalTaskQueryBuilder;
 import org.camunda.bpm.engine.externaltask.LockedExternalTask;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,14 +29,17 @@ public class CamundaService {
     private final ExternalTaskService externalTaskService;
     private final CamundaConfig camundaConfig;
     private final Map<String, CamundaTopicDealAdapter> topicDealAdapterMap;
+    private final DefaultTopicDealAdapter defaultTopicDealAdapter;
 
     public CamundaService(RuntimeService runtimeService,
                           ExternalTaskService externalTaskService,
                           CamundaConfig camundaConfig,
+                          DefaultTopicDealAdapter defaultTopicDealAdapter,
                           List<CamundaTopicDealAdapter> camundaTopicDealAdapters) {
         this.runtimeService = runtimeService;
         this.externalTaskService = externalTaskService;
         this.camundaConfig = camundaConfig;
+        this.defaultTopicDealAdapter = defaultTopicDealAdapter;
         //注入所有的适配器
         this.topicDealAdapterMap = camundaTopicDealAdapters
                 .stream()
@@ -47,8 +52,13 @@ public class CamundaService {
      * @param processKey 流程定义的key，与BPMN文件中定义的process id对应
      * @return 返回创建的流程实例对象
      */
-    public ProcessInstance startProcessByKey(String processKey) {
-        return runtimeService.startProcessInstanceByKey(processKey);
+    public ProcessInstance startProcess(StartProcessReqDTO startProcessReqDTO) {
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(startProcessReqDTO.getProcessKey(),
+                startProcessReqDTO.getBusinessKey(),
+                startProcessReqDTO.getVariables());
+        log.info("启动流程实例成功, processInstanceId: {}, businessKey: {}",
+                processInstance.getProcessInstanceId(), startProcessReqDTO.getBusinessKey());
+        return processInstance;
     }
 
     /**
@@ -82,7 +92,9 @@ public class CamundaService {
         for (LockedExternalTask task : externalTaskList) {
             try {
                 // 执行业务逻辑
-                topicDealAdapterMap.get(task.getTopicName()).deal(task);
+                topicDealAdapterMap
+                        .getOrDefault(task.getTopicName(), defaultTopicDealAdapter)
+                        .deal(task);
             } catch (Exception e) {
                 log.error("处理外部任务失败", e);
                 // 报告失败
@@ -99,6 +111,7 @@ public class CamundaService {
 
     /**
      * fetchTask并锁定任务
+     *
      * @return fetch到的任务
      */
     private List<LockedExternalTask> fetchTask() {
