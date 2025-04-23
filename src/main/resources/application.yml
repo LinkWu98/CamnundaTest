@@ -16,8 +16,6 @@ link:
 server:
   port: 9050
 
-
-
 camunda.bpm:
   admin-user:
     id: demo
