@@ -17,6 +17,6 @@ public class CamundaExternalTaskWorker {
     
     @Scheduled(fixedRate = 1000)
     public void execute() {
-        camundaService.handleExternalTask("myTopic", WORKER_ID);
+        camundaService.handleExternalTask();
     }
 }
