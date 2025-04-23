@@ -1,0 +1,21 @@
+link:
+  camunda:
+    workerId: camunda-test-worker
+    # 一次fetch最大任务数量
+    fetchMaxTaskNum: 1
+    # 一次fetch任务锁定时间（锁定期间再fetch是fetch不到的）
+    lockTime: 600000
+    # fetch的topicName
+    topic:
+      checkCard: check-card
+      chargeCard: charge-Card
+    tenantId: CamundaTest
+server:
+  port: 9050
+camunda.bpm:
+  admin-user:
+    id: demo
+    password: demo
+    firstName: Demo
+  filter:
+    create: All tasks
